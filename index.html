@@ -4,7 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notizen Online</title>
+
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+    
+<script>
+  // Service Worker Registrierung für Offline-Nutzung
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Fehler:', err));
+    });
+  }
+</script>
+    
+    
+    
+    
     <script src="https://cdn.tailwindcss.com"></script>
+
+/* Fix für PWA-Ränder */
+    html {
+        background-color: #000000 !important;
+    }
+
+    body {
+        /* Dein restlicher Code bleibt gleich... */
+
+    
+
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
@@ -398,8 +431,13 @@
             document.body.removeChild(link);
         };
         
-        // Event Listener für den Export
+       // Event Listener für den Export
         exportCsvBtn.addEventListener('click', exportNotesAsCsv);
+
+        // PWA Service Worker Check
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
     </script>
     </body>
 </html>
