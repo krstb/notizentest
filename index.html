@@ -37,20 +37,23 @@
             overflow: hidden;
         }
 
-        /* Einheitliche Buttongröße für Hinzufügen und Speichern */
         .btn-standard {
             font-size: 11px;
             font-weight: 600;
-            padding: 6px 12px;
+            padding: 6px 14px; /* Breite leicht optimiert */
             border-radius: 8px;
             transition: all 0.2s;
+            height: 36px; /* Feste Höhe für Symmetrie */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 <body class="bg-[#e0f7fa] min-h-screen flex flex-col items-center p-2">
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-4 md:p-5 mt-1">
-        <h1 class="text-lg font-bold text-center text-slate-800 mb-3">Notizen-Online"</h1>
+        <h1 class="text-lg font-bold text-center text-slate-800 mb-3">Notizen-Online</h1>
 
         <div id="appContent" class="hidden">
             <form id="noteForm" class="flex flex-col gap-2 mb-4">
@@ -58,7 +61,7 @@
                        class="w-full p-2 rounded-lg border-2 border-slate-200 focus:outline-none focus:border-cyan-500 text-sm shadow-sm"></textarea>
                 
                 <div class="flex gap-2 items-center">
-                    <select id="priorityInput" class="flex-1 p-2 rounded-lg border-2 border-slate-200 text-sm bg-white cursor-pointer">
+                    <select id="priorityInput" class="flex-1 h-[36px] p-2 rounded-lg border-2 border-slate-200 text-sm bg-white cursor-pointer">
                         <option value="1">Niedrig</option>
                         <option value="2">Mittel</option>
                         <option value="3">Hoch</option>
@@ -115,12 +118,13 @@
 
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
 
+        // gap-2 statt gap-4 für enger beieinander liegende Buttons
         const createNoteView = (note) => `
             <div class="flex flex-1 min-w-0 items-start mr-2">
                  <span class="w-2.5 h-2.5 rounded-full mr-3 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
                  <p class="text-slate-700 text-sm leading-snug note-text-container flex-1">${note.text}</p>
             </div>
-            <div class="flex gap-4 flex-shrink-0 items-center">
+            <div class="flex gap-2 flex-shrink-0 items-center">
                 <button class="edit-btn p-1 text-cyan-600 hover:text-cyan-800 transition-transform active:scale-110">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L15.232 5.232z" /></svg>
                 </button>
@@ -151,9 +155,7 @@
             currentUserId = user.uid;
             appContent.classList.remove("hidden");
             loginBtn.classList.add("hidden");
-            
             const q = query(collection(db, `notes/${user.uid}/userNotes`), orderBy("priority", "desc"), orderBy("text", "asc"));
-            
             if (unsubscribeNotes) unsubscribeNotes();
             unsubscribeNotes = onSnapshot(q, s => {
                 currentNotes = s.docs.map(d => ({id: d.id, ...d.data()}));
@@ -193,12 +195,8 @@
                 el.querySelector('.edit-input').focus();
             } else if (btn.classList.contains('save-btn')) {
                 const newText = el.querySelector('.edit-input').value.trim();
-                if (newText) {
-                    await updateDoc(noteRef, { text: newText });
-                    // Ansicht wird durch onSnapshot automatisch aktualisiert
-                } else {
-                    renderNotesUI(currentNotes);
-                }
+                if (newText) await updateDoc(noteRef, { text: newText });
+                // onSnapshot sorgt für Re-Render
             } else if (btn.classList.contains('cancel-btn')) {
                 renderNotesUI(currentNotes);
             }
