@@ -9,8 +9,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        /* Layout-Fixes */
         html, body { 
             background-color: #e0f7fa !important; 
             overscroll-behavior: none; 
@@ -19,17 +17,21 @@
         body { font-family: 'Inter', sans-serif; }
         textarea { resize: none; }
         
-        /* Fix für auslaufenden Text */
-        .force-break {
+        /* Sorgt dafür, dass langer Text die Buttons nicht wegdrückt */
+        .note-text {
             word-break: break-all;
             overflow-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Max 3 Zeilen, dann ... */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     </style>
-</head>
+ head>
 <body class="bg-blue-50 min-h-screen flex flex-col items-center p-2 md:p-8">
 
     <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-4 md:p-6 mt-4">
-        <h1 class="text-2xl font-bold text-center text-slate-900 mb-4">Notizen-Online6</h1>
+        <h1 class="text-2xl font-bold text-center text-slate-900 mb-4">Notizen-Online7</h1>
 
         <div id="appContent" class="hidden">
             <form id="noteForm" class="flex flex-col gap-2 mb-4">
@@ -66,7 +68,6 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
         
-        // Firebase Konfiguration bleibt identisch
         const firebaseConfig = {
              apiKey: "AIzaSyAy_eDSW5Q9KzZFptsTK5DGthk1ed2Objc",
              authDomain: "notizentest-1bcdc.firebaseapp.com",
@@ -95,17 +96,18 @@
 
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
 
+        // Geändertes HTML: Flex-Layout sorgt dafür, dass Buttons rechts bleiben
         const createNoteView = (note) => `
-            <div class="flex flex-1 min-w-0 items-start">
+            <div class="flex flex-1 min-w-0 items-start mr-2">
                  <span class="w-2.5 h-2.5 rounded-full mr-3 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
-                 <p class="text-slate-700 text-sm leading-snug whitespace-pre-wrap force-break flex-1">${note.text}</p>
+                 <p class="text-slate-700 text-sm leading-snug note-text flex-1">${note.text}</p>
             </div>
-            <div class="flex gap-2 ml-2 flex-shrink-0">
+            <div class="flex gap-2 flex-shrink-0 items-center">
                 <button class="edit-btn p-1 text-slate-500 hover:text-cyan-600 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L15.232 5.232z" stroke-width="2"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L15.232 5.232z" stroke-width="2"/></svg>
                 </button>
                 <button class="delete-btn p-1 text-slate-500 hover:text-red-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
                 </button>
             </div>
         `;
@@ -114,7 +116,7 @@
             notesContainer.innerHTML = ''; 
             notes.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'flex items-start justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden';
+                el.className = 'flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm';
                 el.dataset.id = note.id; 
                 el.innerHTML = createNoteView(note);
                 notesContainer.appendChild(el);
@@ -132,7 +134,7 @@
             appContent.classList.remove("hidden");
             loginBtn.classList.add("hidden");
             
-            // EXAKTE SORTIERLOGIK AUS DEINEM CODE
+            // Sortierung wie im Original
             const q = query(collection(db, `notes/${user.uid}/userNotes`), orderBy("priority", "desc"), orderBy("text", "asc"));
             
             if (unsubscribeNotes) unsubscribeNotes();
@@ -146,7 +148,6 @@
             e.preventDefault();
             const text = noteInput.value.trim();
             if (!text || !currentUserId) return;
-            // SPEICHERLOGIK BLEIBT IDENTISCH
             await addDoc(collection(db, `notes/${currentUserId}/userNotes`), {
                 text, priority: document.getElementById('priorityInput').value, createdAt: serverTimestamp()
             });
@@ -166,7 +167,7 @@
                 const old = currentNotes.find(n => n.id === id);
                 el.innerHTML = `
                     <div class="flex flex-col gap-2 w-full">
-                        <textarea class="edit-input w-full p-2 rounded border border-cyan-500 text-sm force-break" rows="3">${old.text}</textarea>
+                        <textarea class="edit-input w-full p-2 rounded border border-cyan-500 text-sm" rows="3">${old.text}</textarea>
                         <div class="flex gap-2 justify-end">
                             <button class="save-btn text-[11px] bg-green-600 text-white px-3 py-1.5 rounded font-semibold shadow-sm">Speichern</button>
                             <button class="cancel-btn text-[11px] bg-slate-100 px-3 py-1.5 rounded text-slate-600 border border-slate-200">Abbrechen</button>
