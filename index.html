@@ -48,6 +48,11 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* Cursor-Hand für klickbare Notizen */
+        .note-item {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-[#e0f7fa] min-h-screen flex flex-col items-center p-2">
@@ -118,18 +123,11 @@
 
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
 
+        // Rein klickbare Ansicht ohne Icons
         const createNoteView = (note) => `
-            <div class="flex flex-1 min-w-0 items-start mr-1">
+            <div class="flex flex-1 min-w-0 items-start pointer-events-none">
                  <span class="w-2.5 h-2.5 rounded-full mr-2.5 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
                  <p class="text-slate-700 text-sm leading-snug note-text-container flex-1">${note.text}</p>
-            </div>
-            <div class="flex gap-0.5 flex-shrink-0 items-center">
-                <button class="edit-btn p-1 text-cyan-600 hover:text-cyan-800 transition-transform active:scale-125">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L15.232 5.232z" /></svg>
-                </button>
-                <button class="delete-btn p-1 text-red-500 hover:text-red-700 transition-transform active:scale-125">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
             </div>
         `;
 
@@ -137,7 +135,7 @@
             notesContainer.innerHTML = ''; 
             notes.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm';
+                el.className = 'note-item flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition-colors hover:bg-slate-50';
                 el.dataset.id = note.id; 
                 el.innerHTML = createNoteView(note);
                 notesContainer.appendChild(el);
@@ -173,17 +171,14 @@
         };
 
         notesContainer.onclick = async (e) => {
+            const item = e.target.closest('.note-item');
             const btn = e.target.closest('button');
-            if (!btn) return;
-            const el = btn.closest('[data-id]');
-            const id = el.dataset.id;
-            const noteRef = doc(db, `notes/${currentUserId}/userNotes/${id}`);
-
-            if (btn.classList.contains('delete-btn')) {
-                if(confirm("Löschen?")) await deleteDoc(noteRef);
-            } else if (btn.classList.contains('edit-btn')) {
+            
+            // Wenn auf die Notiz geklickt wird (und nicht auf einen Button im Edit-Mode)
+            if (item && !btn) {
+                const id = item.dataset.id;
                 const old = currentNotes.find(n => n.id === id);
-                el.innerHTML = `
+                item.innerHTML = `
                     <div class="flex flex-col gap-2 w-full">
                         <textarea class="edit-input w-full p-2 rounded border border-cyan-500 text-sm shadow-inner" rows="3">${old.text}</textarea>
                         <select class="edit-priority w-full p-1.5 rounded border border-cyan-500 text-sm bg-white">
@@ -191,12 +186,23 @@
                             <option value="2" ${old.priority === '2' ? 'selected' : ''}>Mittel</option>
                             <option value="3" ${old.priority === '3' ? 'selected' : ''}>Hoch</option>
                         </select>
-                        <div class="flex gap-1 justify-end">
+                        <div class="flex gap-1 justify-end mt-1">
+                            <button class="delete-btn btn-action bg-red-500 text-white shadow-sm active:scale-95 mr-auto">Löschen</button>
                             <button class="save-btn btn-action bg-green-600 text-white shadow-sm active:scale-95">Speichern</button>
                             <button class="cancel-btn btn-action bg-slate-100 text-slate-500 border border-slate-200 active:scale-95">Abbrechen</button>
                         </div>
                     </div>`;
-                el.querySelector('.edit-input').focus();
+                item.querySelector('.edit-input').focus();
+                return;
+            }
+
+            if (!btn) return;
+            const el = btn.closest('[data-id]');
+            const id = el.dataset.id;
+            const noteRef = doc(db, `notes/${currentUserId}/userNotes/${id}`);
+
+            if (btn.classList.contains('delete-btn')) {
+                if(confirm("Löschen?")) await deleteDoc(noteRef);
             } else if (btn.classList.contains('save-btn')) {
                 const newText = el.querySelector('.edit-input').value.trim();
                 const newPrio = el.querySelector('.edit-priority').value;
