@@ -28,9 +28,11 @@
         body { font-family: 'Inter', sans-serif; }
         textarea { resize: none; }
         
+        /* Korrigierter Zeilenumbruch für die Ansicht */
         .note-text-container {
-            word-break: break-all;
-            overflow-wrap: break-word;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            white-space: pre-wrap; /* Behält auch manuelle Zeilenumbrüche bei */
             display: -webkit-box;
             -webkit-line-clamp: 12;
             -webkit-box-orient: vertical;
@@ -40,16 +42,15 @@
         .btn-action {
             font-size: 11px;
             font-weight: 600;
-            padding: 0 12px;
+            padding: 0 10px;
             border-radius: 8px;
             transition: all 0.2s;
-            height: 34px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* Cursor-Hand für klickbare Notizen */
         .note-item {
             cursor: pointer;
         }
@@ -66,7 +67,7 @@
                        class="w-full p-2 rounded-lg border-2 border-slate-200 focus:outline-none focus:border-cyan-500 text-sm shadow-sm"></textarea>
                 
                 <div class="flex gap-2 items-center">
-                    <select id="priorityInput" class="flex-1 h-[34px] p-1.5 rounded-lg border-2 border-slate-200 text-sm bg-white cursor-pointer">
+                    <select id="priorityInput" class="flex-1 h-[32px] p-1 rounded-lg border-2 border-slate-200 text-sm bg-white cursor-pointer">
                         <option value="1">Niedrig</option>
                         <option value="2">Mittel</option>
                         <option value="3">Hoch</option>
@@ -123,7 +124,6 @@
 
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
 
-        // Rein klickbare Ansicht ohne Icons
         const createNoteView = (note) => `
             <div class="flex flex-1 min-w-0 items-start pointer-events-none">
                  <span class="w-2.5 h-2.5 rounded-full mr-2.5 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
@@ -174,7 +174,6 @@
             const item = e.target.closest('.note-item');
             const btn = e.target.closest('button');
             
-            // Wenn auf die Notiz geklickt wird (und nicht auf einen Button im Edit-Mode)
             if (item && !btn) {
                 const id = item.dataset.id;
                 const old = currentNotes.find(n => n.id === id);
@@ -186,8 +185,8 @@
                             <option value="2" ${old.priority === '2' ? 'selected' : ''}>Mittel</option>
                             <option value="3" ${old.priority === '3' ? 'selected' : ''}>Hoch</option>
                         </select>
-                        <div class="flex gap-1 justify-end mt-1">
-                            <button class="delete-btn btn-action bg-red-500 text-white shadow-sm active:scale-95 mr-auto">Löschen</button>
+                        <div class="flex gap-1 justify-start mt-1">
+                            <button class="delete-btn btn-action bg-red-500 text-white shadow-sm active:scale-95">Löschen</button>
                             <button class="save-btn btn-action bg-green-600 text-white shadow-sm active:scale-95">Speichern</button>
                             <button class="cancel-btn btn-action bg-slate-100 text-slate-500 border border-slate-200 active:scale-95">Abbrechen</button>
                         </div>
@@ -202,7 +201,7 @@
             const noteRef = doc(db, `notes/${currentUserId}/userNotes/${id}`);
 
             if (btn.classList.contains('delete-btn')) {
-                if(confirm("Löschen?")) await deleteDoc(noteRef);
+                if(confirm("Wirklich löschen?")) await deleteDoc(noteRef);
             } else if (btn.classList.contains('save-btn')) {
                 const newText = el.querySelector('.edit-input').value.trim();
                 const newPrio = el.querySelector('.edit-priority').value;
