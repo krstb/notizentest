@@ -76,8 +76,7 @@
             </form>
     
             <div id="notesContainer" class="space-y-2">
-                <p id="loadingMessage" class="text-center text-slate-400 text-xs italic">Keine Notizen vorhanden...</p>
-            </div>
+                </div>
     
             <div id="authFooter" class="mt-6 pt-2 border-t border-slate-100 text-center flex justify-center gap-4">
                 <button id="exportCsvBtn" class="text-slate-400 text-[10px] hover:text-slate-600 transition-colors">CSV Export</button>
@@ -93,8 +92,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js"; // Beachte: Firestore Imports korrigiert falls nötig
-        import { getFirestore as getFirestoreDB, collection as col, addDoc as add, doc as dRef, updateDoc as update, deleteDoc as del, onSnapshot as snap, query as qry, orderBy as order } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
         
         const firebaseConfig = {
              apiKey: "AIzaSyAy_eDSW5Q9KzZFptsTK5DGthk1ed2Objc",
@@ -107,7 +105,7 @@
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestoreDB(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
         const noteInput = document.getElementById('noteInput');
@@ -156,9 +154,11 @@
             currentUserId = user.uid;
             appContent.classList.remove("hidden");
             loginBtn.classList.add("hidden");
-            const q = qry(col(db, `notes/${user.uid}/userNotes`), order("priority", "desc"), order("createdAt", "desc"));
+            
+            const q = query(collection(db, `notes/${user.uid}/userNotes`), orderBy("priority", "desc"), orderBy("text", "asc"));
+            
             if (unsubscribeNotes) unsubscribeNotes();
-            unsubscribeNotes = snap(q, s => {
+            unsubscribeNotes = onSnapshot(q, s => {
                 currentNotes = s.docs.map(d => ({id: d.id, ...d.data()}));
                 renderNotesUI(currentNotes);
             });
@@ -168,7 +168,7 @@
             e.preventDefault();
             const text = noteInput.value.trim();
             if (!text || !currentUserId) return;
-            await add(col(db, `notes/${currentUserId}/userNotes`), {
+            await addDoc(collection(db, `notes/${currentUserId}/userNotes`), {
                 text, priority: document.getElementById('priorityInput').value, createdAt: serverTimestamp()
             });
             noteInput.value = '';
@@ -204,15 +204,15 @@
             const el = btn.closest('[data-id]');
             if (!el) return;
             const id = el.dataset.id;
-            const noteRef = dRef(db, `notes/${currentUserId}/userNotes/${id}`);
+            const noteRef = doc(db, `notes/${currentUserId}/userNotes/${id}`);
 
             if (btn.classList.contains('delete-btn')) {
-                if(confirm("Wirklich löschen?")) await del(noteRef);
+                if(confirm("Wirklich löschen?")) await deleteDoc(noteRef);
             } else if (btn.classList.contains('save-btn')) {
                 const newText = el.querySelector('.edit-input').value.trim();
                 const newPrio = el.querySelector('.edit-priority').value;
                 if (newText) {
-                    await update(noteRef, { text: newText, priority: newPrio });
+                    await updateDoc(noteRef, { text: newText, priority: newPrio });
                 } else {
                     renderNotesUI(currentNotes);
                 }
