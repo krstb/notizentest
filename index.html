@@ -25,18 +25,17 @@
         
         html, body { 
             background-color: #e0f7fa !important; 
-            overscroll-behavior: none; 
             height: 100%;
         }
         body { font-family: 'Inter', sans-serif; }
         textarea { resize: none; }
         
-        /* Layout-Fix: Verhindert, dass Text die Buttons verdrängt */
+        /* Fix für auslaufenden Text bei langen Wörtern */
         .note-text-container {
             word-break: break-all;
             overflow-wrap: break-word;
             display: -webkit-box;
-            -webkit-line-clamp: 10; /* Erlaubt längere Texte, bevor abgeschnitten wird */
+            -webkit-line-clamp: 10;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -45,7 +44,7 @@
 <body class="bg-blue-50 min-h-screen flex flex-col items-center p-2 md:p-8">
 
     <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-4 md:p-6 mt-4">
-        <h1 class="text-2xl font-bold text-center text-slate-900 mb-4">Notizen-Online</h1>
+        <h1 class="text-xl font-bold text-center text-slate-900 mb-4">Notizen-Online</h1>
 
         <div id="appContent" class="hidden">
             <form id="noteForm" class="flex flex-col gap-2 mb-4">
@@ -58,7 +57,7 @@
                         <option value="2">Mittel</option>
                         <option value="3">Hoch</option>
                     </select>
-                    <button type="submit" class="bg-cyan-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors hover:bg-cyan-700">Hinzufügen</button>
+                    <button type="submit" class="bg-cyan-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors hover:bg-cyan-700 shadow-sm">Hinzufügen</button>
                 </div>
             </form>
     
@@ -110,16 +109,17 @@
 
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
 
+        // Icons sind jetzt farbig (cyan-600 und red-500) statt grau
         const createNoteView = (note) => `
             <div class="flex flex-1 min-w-0 items-start mr-2">
                  <span class="w-2.5 h-2.5 rounded-full mr-3 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
                  <p class="text-slate-700 text-sm leading-snug note-text-container flex-1">${note.text}</p>
             </div>
-            <div class="flex gap-2 flex-shrink-0 items-center">
-                <button class="edit-btn p-1 text-slate-500 hover:text-cyan-600 transition-colors">
+            <div class="flex gap-3 flex-shrink-0 items-center">
+                <button class="edit-btn p-1 text-cyan-600 hover:text-cyan-800 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L15.232 5.232z" stroke-width="2"/></svg>
                 </button>
-                <button class="delete-btn p-1 text-slate-500 hover:text-red-500 transition-colors">
+                <button class="delete-btn p-1 text-red-500 hover:text-red-700 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg>
                 </button>
             </div>
@@ -147,7 +147,7 @@
             appContent.classList.remove("hidden");
             loginBtn.classList.add("hidden");
             
-            // ORIGINAL-LOGIK: priority desc, text asc
+            // Sortierung: Priorität absteigend, Text alphabetisch
             const q = query(collection(db, `notes/${user.uid}/userNotes`), orderBy("priority", "desc"), orderBy("text", "asc"));
             
             if (unsubscribeNotes) unsubscribeNotes();
@@ -161,6 +161,7 @@
             e.preventDefault();
             const text = noteInput.value.trim();
             if (!text || !currentUserId) return;
+            // Speicher-Struktur wie im Original
             await addDoc(collection(db, `notes/${currentUserId}/userNotes`), {
                 text, priority: document.getElementById('priorityInput').value, createdAt: serverTimestamp()
             });
