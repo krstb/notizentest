@@ -6,7 +6,7 @@
     <title>Notizen Online</title>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#e0f7fa">
+    <meta name="theme-color" content="#000000">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
@@ -19,23 +19,17 @@
     </script>
     
     <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-        /* 1. Fix für PWA-Ränder: Das äußerste Element bleibt schwarz */
-        html {
-            background-color: #000000 !important;
-        }
-        
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* 2. Nur der sichtbare Hintergrund der App wird hellblau */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #e0f7fa ;
-        }
-
         textarea { 
-            resize: none !important; 
+    resize: none !important; 
+}
+        html, body { 
+            background-color: #e0f7fa !important;
         }
+        body { font-family: 'Inter', sans-serif; }
+        textarea { resize: none; }
         
         .note-text-container {
             overflow-wrap: anywhere;
@@ -67,7 +61,7 @@
             padding: 0 20px;
             border-radius: 8px;
             height: 32px;
-            display: inline-flex;
+            display: inline-flex; /* Nicht mehr w-full */
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
@@ -77,12 +71,11 @@
             cursor: pointer;
         }
     </style>
-
 </head>
-<body class="min-h-screen flex flex-col items-center p-2">
+<body class="bg-[#e0f7fa] min-h-screen flex flex-col items-center p-2">
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-4 md:p-5 mt-0.5">
-        <h1 class="text-lg font-bold text-center text-slate-800 mb-3">Notizen-Online4</h1>
+        <h1 class="text-lg font-bold text-center text-slate-800 mb-3">Notizen-Online1</h1>
 
         <div id="authPanelTop" class="text-center mb-2">
             <button id="loginBtn" class="bg-cyan-600 text-white btn-login hidden hover:bg-cyan-700 active:scale-95 shadow-sm">
