@@ -23,13 +23,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         textarea { 
-    resize: none !important; 
-}
+            resize: none !important; 
+        }
         html, body { 
             background-color: #e0f7fa !important;
         }
         body { font-family: 'Inter', sans-serif; }
-        textarea { resize: none; }
         
         .note-text-container {
             overflow-wrap: anywhere;
@@ -41,7 +40,6 @@
             overflow: hidden;
         }
 
-        /* Kompakte Standard-Button-Größe */
         .btn-action {
             font-size: 11px;
             font-weight: 600;
@@ -54,14 +52,13 @@
             justify-content: center;
         }
 
-        /* Login Button - Jetzt dezent und zentriert */
         .btn-login {
             font-size: 11px;
             font-weight: 600;
             padding: 0 20px;
             border-radius: 8px;
             height: 32px;
-            display: inline-flex; /* Nicht mehr w-full */
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
@@ -69,6 +66,20 @@
 
         .note-item {
             cursor: pointer;
+        }
+
+        /* Punkt 2: UI-Stabilisierung */
+        #notesContainer {
+            min-height: 50px;
+        }
+
+        #appContent:not(.hidden) {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -137,17 +148,7 @@
         let currentNotes = [];
         let unsubscribeNotes = null;
 
-        loginBtn.onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('logoutBtn').onclick = () => signOut(auth);
-
         const priorityColors = { '3': 'bg-red-500', '2': 'bg-yellow-400', '1': 'bg-green-500' };
-
-        const createNoteView = (note) => `
-            <div class="flex flex-1 min-w-0 items-start pointer-events-none">
-                 <span class="w-2.5 h-2.5 rounded-full mr-2.5 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
-                 <p class="text-slate-700 text-sm leading-snug note-text-container flex-1">${note.text}</p>
-            </div>
-        `;
 
         const renderNotesUI = (notes) => {
             notesContainer.innerHTML = ''; 
@@ -159,9 +160,31 @@
                 const el = document.createElement('div');
                 el.className = 'note-item flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition-colors hover:bg-slate-50';
                 el.dataset.id = note.id; 
-                el.innerHTML = createNoteView(note);
+                el.innerHTML = `
+                    <div class="flex flex-1 min-w-0 items-start pointer-events-none">
+                         <span class="w-2.5 h-2.5 rounded-full mr-2.5 mt-1.5 flex-shrink-0 ${priorityColors[note.priority] || 'bg-gray-300'}"></span>
+                         <p class="text-slate-700 text-sm leading-snug note-text-container flex-1">${note.text}</p>
+                    </div>`;
                 notesContainer.appendChild(el);
             });
+        };
+
+        // Punkt 1: Sofortiges Laden aus dem Cache
+        const cachedData = localStorage.getItem('notes_cache');
+        if (cachedData) {
+            try {
+                currentNotes = JSON.parse(cachedData);
+                appContent.classList.remove("hidden");
+                renderNotesUI(currentNotes);
+            } catch (e) { console.error("Cache-Fehler", e); }
+        }
+
+        loginBtn.onclick = () => signInWithPopup(auth, provider);
+        
+        // Punkt 3: Sicherer Logout mit Cache-Löschung
+        document.getElementById('logoutBtn').onclick = () => {
+            localStorage.removeItem('notes_cache');
+            signOut(auth).then(() => location.reload());
         };
 
         onAuthStateChanged(auth, user => {
@@ -174,10 +197,14 @@
             currentUserId = user.uid;
             appContent.classList.remove("hidden");
             loginBtn.classList.add("hidden");
+            
             const q = query(collection(db, `notes/${user.uid}/userNotes`), orderBy("priority", "desc"), orderBy("text", "asc"));
+            
             if (unsubscribeNotes) unsubscribeNotes();
             unsubscribeNotes = onSnapshot(q, s => {
                 currentNotes = s.docs.map(d => ({id: d.id, ...d.data()}));
+                // Punkt 1: Cache aktualisieren
+                localStorage.setItem('notes_cache', JSON.stringify(currentNotes));
                 renderNotesUI(currentNotes);
             });
         });
